@@ -1,1 +1,885 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Acid and Alkali Titration</title>
+    <style>
+        /* 基礎樣式 */
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f9; padding: 20px; color: #333; margin: 0; }
+        .container { max-width: 950px; margin: auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); position: relative; }
+        
+        h1 { color: #2c3e50; text-align: center; font-size: 24px; line-height: 1.4; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 3px solid #2c3e50;}
+        h2 { color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; font-size: 20px; }
+        
+        /* 語言切換按鈕 */
+        .lang-btn { position: absolute; top: 15px; right: 20px; background-color: #34495e; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-size: 14px; transition: 0.3s; z-index: 10; }
+        .lang-btn:hover { background-color: #2c3e50; }
 
+        /* 設定區域 */
+        .setup-box { background-color: #e8f4f8; border: 2px solid #3498db; border-radius: 8px; padding: 20px; margin-bottom: 20px; }
+        .options-group { margin: 15px 0; font-size: 16px; background: #fff; padding: 10px; border-radius: 5px; }
+        .options-group input { margin-right: 8px; transform: scale(1.2); cursor: pointer; }
+        .options-group label { margin-right: 20px; cursor: pointer; font-weight: bold; display: inline-block; padding: 5px 0; }
+        
+        /* 模擬區域 */
+        .simulation-container { display: flex; flex-direction: row; justify-content: space-around; align-items: flex-start; flex-wrap: wrap; background-color: #fff; border: 2px dashed #bdc3c7; border-radius: 10px; padding: 20px; margin-bottom: 30px; gap: 20px; }
+        .apparatus-box { display: flex; flex-direction: column; align-items: center; width: 100%; max-width: 300px; }
+        .apparatus { width: 100%; max-width: 220px; height: auto; }
+        
+        /* 圖表區域 */
+        .graph-box { width: 100%; max-width: 450px; display: flex; flex-direction: column; align-items: center; }
+        .graph-svg { width: 100%; height: auto; background-color: #fdfefe; border: 1px solid #ccc; border-radius: 5px; touch-action: none; }
+        .axis-line { stroke: #333; stroke-width: 2; }
+        .grid-line { stroke: #e0e0e0; stroke-width: 1; stroke-dasharray: 4,4; }
+        .curve-line { fill: none; stroke: #3498db; stroke-width: 2; opacity: 0; transition: opacity 0.5s; }
+        .drawn-curve-line { fill: none; stroke: #e74c3c; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; opacity: 0; }
+        .eq-line { stroke: #95a5a6; stroke-width: 2; stroke-dasharray: 5,5; opacity: 0; transition: opacity 0.3s; }
+        .graph-dot { fill: #e74c3c; r: 5; opacity: 0; }
+        
+        /* 控制區域 */
+        .controls { margin-top: 20px; text-align: center; width: 100%; opacity: 0.4; pointer-events: none; transition: opacity 0.3s; }
+        
+        input[type="range"] { 
+            -webkit-appearance: none; 
+            appearance: none;
+            width: 100%; height: 10px; 
+            background: #bdc3c7; border-radius: 5px;
+            outline: none; cursor: pointer; touch-action: none; margin: 15px 0;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none; appearance: none;
+            width: 28px; height: 28px; border-radius: 50%;
+            background: #27ae60; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        }
+        input[type="range"]::-moz-range-thumb {
+            width: 28px; height: 28px; border-radius: 50%;
+            background: #27ae60; cursor: pointer; border: none; box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        }
+        
+        .status-badge { display: inline-block; margin-top: 5px; padding: 8px 15px; border-radius: 20px; font-weight: bold; color: #333; background-color: #bdc3c7; transition: background-color 0.3s; font-size: 14px;}
+
+        /* 表格響應式處理 */
+        .table-responsive { width: 100%; overflow-x: auto; margin-top: 20px; -webkit-overflow-scrolling: touch; }
+        table { width: 100%; border-collapse: collapse; text-align: center; min-width: 500px; }
+        th, td { border: 1px solid #bdc3c7; padding: 10px 5px; font-size: 15px; }
+        th { background-color: #ecf0f1; }
+        
+        /* 🔥 輸入框精簡化：固定 4 位數長度，移除預設箭嘴 */
+        input[type="text"] { 
+            width: 55px; 
+            padding: 6px 2px; 
+            text-align: center; 
+            border: 2px solid #ccc; 
+            border-radius: 4px; 
+            font-size: 15px; 
+            transition: 0.3s; 
+            box-sizing: border-box;
+        }
+        input[type="text"]:focus { border-color: #3498db; outline: none; }
+        
+        input.correct { border-color: #27ae60; background-color: #eafaf1; }
+        input.incorrect { border-color: #e74c3c; background-color: #fdedec; }
+        input[readonly] { background-color: #ecf0f1; border: 2px dashed #95a5a6; color: #2c3e50; font-weight: bold; cursor: not-allowed; }
+
+        ::placeholder { color: #95a5a6; font-size: 13px; }
+
+        /* 計算區域 */
+        .calculation-box { margin-top: 30px; padding: 20px; background-color: #f9fbfd; border-left: 4px solid #3498db; border-radius: 0 8px 8px 0; overflow-x: auto; }
+        .equation-box { background-color: #fff; padding: 15px; border-radius: 5px; border: 1px solid #bdc3c7; margin: 15px 0; font-size: 16px; line-height: 2.2; overflow-x: auto; }
+        
+        /* 🔥 強制同行顯示 (防止除號被折行) */
+        .nowrap-math { white-space: nowrap; display: inline-block; }
+
+        /* 按鈕群組 */
+        .button-group { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
+        button { padding: 12px 20px; font-size: 16px; font-weight: bold; color: white; background-color: #3498db; border: none; border-radius: 5px; cursor: pointer; transition: 0.2s; flex-grow: 1; text-align: center; }
+        button:hover { background-color: #2980b9; }
+        .btn-hint { background-color: #f39c12; }
+        .btn-hint:hover { background-color: #e67e22; }
+        .btn-reset { background-color: #e74c3c; }
+        .btn-reset:hover { background-color: #c0392b; }
+        .btn-calc { background-color: #8e44ad; } 
+        .btn-calc:hover { background-color: #9b59b6; }
+
+        .message { margin-top: 15px; font-weight: bold; line-height: 1.5; padding: 15px; border-radius: 5px; font-size: 15px; word-wrap: break-word; }
+        
+        /* Hints 框 */
+        .hints-box { background-color: #fff8e1; border-left: 5px solid #f39c12; padding: 15px; margin-top: 15px; border-radius: 5px; font-size: 15px; display: none; line-height: 1.6; }
+        .hints-box ul { padding-left: 20px; margin-top: 5px; }
+        .hints-box li { margin-bottom: 8px; }
+
+        /* 懸浮計算機 */
+        .calc-popup { position: fixed; bottom: 20px; right: 20px; width: 280px; background: #2c3e50; border-radius: 12px; padding: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.4); display: none; z-index: 1000; }
+        .calc-header { display: flex; justify-content: space-between; align-items: center; color: white; margin-bottom: 15px; font-size: 16px; font-weight: bold; }
+        .calc-close { cursor: pointer; font-size: 22px; line-height: 1; padding: 0 5px; border-radius: 50%; background: #e74c3c; color: white; }
+        .calc-display { width: 100%; background: #ecf0f1; border: none; padding: 15px; font-size: 22px; text-align: right; border-radius: 6px; margin-bottom: 15px; box-sizing: border-box; font-family: monospace; color: #2c3e50; font-weight: bold; }
+        .calc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+        .calc-btn { background: #95a5a6; padding: 12px 0; border-radius: 6px; font-size: 18px; color: white; transition: 0.1s; border: none; cursor: pointer; }
+        .calc-btn:active { transform: scale(0.95); }
+        .calc-btn.num { background: #7f8c8d; }
+        .calc-btn.num:hover { background: #bdc3c7; color: #2c3e50; }
+        .calc-btn.op { background: #f39c12; }
+        .calc-btn.op:hover { background: #f1c40f; color: #2c3e50; }
+        .calc-btn.sys { background: #e74c3c; }
+        .calc-btn.sys:hover { background: #c0392b; }
+        .calc-btn.eval { background: #27ae60; grid-column: span 2; }
+        .calc-btn.eval:hover { background: #2ecc71; }
+
+        /* 手機版樣式優化 */
+        @media (max-width: 768px) {
+            body { padding: 10px; }
+            .container { padding: 15px; padding-top: 50px; }
+            h1 { font-size: 20px; margin-bottom: 20px; }
+            .lang-btn { top: 10px; right: 10px; padding: 6px 12px; }
+            .options-group label { display: block; margin-bottom: 10px; border-bottom: 1px dashed #ccc; padding-bottom: 10px; }
+            .options-group label:last-child { border-bottom: none; }
+            
+            .simulation-container { flex-direction: column; align-items: center; padding: 10px; }
+            .graph-box { margin-top: 20px; }
+            
+            .equation-box { font-size: 14px; padding: 12px; display: block; line-height: 2.6; }
+            .equation-box input { margin: 2px 4px; vertical-align: middle; }
+            
+            .button-group { flex-direction: column; }
+            button { width: 100%; margin: 0; }
+            .calc-popup { bottom: 25px; right: 10px; left: 10px; width: calc(100% - 20px); max-width: 400px; margin: auto; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <button class="lang-btn" onclick="toggleLanguage()" id="lang-btn">繁體中文</button>
+
+    <h1 class="lang" data-en="Acid and Alkali Titration : Finding the molarity of a given acid using the standard solution prepared" data-zh="酸鹼滴定：利用標準溶液求出給定酸的摩爾濃度">Acid and Alkali Titration : Finding the molarity of a given acid using the standard solution prepared</h1>
+
+    <h2 class="lang" data-en="1. Experiment Setup" data-zh="1. 實驗設定">1. Experiment Setup</h2>
+    
+    <div class="setup-box">
+        <p><strong class="lang" data-en="Step A: Choose the concentration of NaOH(aq) [Strong Alkaline]" data-zh="步驟 A：選擇 NaOH(aq) [強鹼] 的濃度">Step A: Choose the concentration of NaOH(aq) [Strong Alkaline]</strong></p>
+        <div class="options-group">
+            <input type="radio" id="conc-01" name="naoh_conc" value="0.10"> <label for="conc-01">0.10 M</label>
+            <input type="radio" id="conc-02" name="naoh_conc" value="0.20"> <label for="conc-02">0.20 M</label>
+            <input type="radio" id="conc-03" name="naoh_conc" value="0.30"> <label for="conc-03">0.30 M</label>
+        </div>
+
+        <p><strong class="lang" data-en="Step B: Choose an acid for the titration" data-zh="步驟 B：選擇滴定用的酸">Step B: Choose an acid for the titration</strong></p>
+        <div class="options-group">
+            <input type="radio" id="acid-hcl" name="acid" value="HCl"> <label for="acid-hcl" class="lang" data-en="Dilute HCl (Strong)" data-zh="稀鹽酸 (強酸)">Dilute HCl (Strong)</label>
+            <input type="radio" id="acid-h2so4" name="acid" value="H2SO4"> <label for="acid-h2so4" class="lang" data-en="Dilute H₂SO₄ (Strong)" data-zh="稀硫酸 (強酸)">Dilute H₂SO₄ (Strong)</label>
+            <input type="radio" id="acid-ch3cooh" name="acid" value="CH3COOH"> <label for="acid-ch3cooh" class="lang" data-en="Dilute CH₃COOH (Weak)" data-zh="稀乙酸/醋酸 (弱酸)">Dilute CH₃COOH (Weak)</label>
+        </div>
+
+        <p><strong class="lang" data-en="Step C: Choose a suitable indicator" data-zh="步驟 C：選擇合適的指示劑">Step C: Choose a suitable indicator</strong></p>
+        <div class="options-group">
+            <input type="radio" id="ind-mo" name="indicator" value="mo"> <label for="ind-mo" class="lang" data-en="Methyl Orange" data-zh="甲基橙 (Methyl Orange)">Methyl Orange</label>
+            <input type="radio" id="ind-ph" name="indicator" value="ph"> <label for="ind-ph" class="lang" data-en="Phenolphthalein" data-zh="酚酞 (Phenolphthalein)">Phenolphthalein</label>
+        </div>
+        
+        <button onclick="checkSetup()" class="lang" data-en="Confirm Settings" data-zh="確認設定">Confirm Settings</button>
+        <div id="setup-feedback" class="message" style="display:none;"></div>
+    </div>
+
+    <h2 class="lang" data-en="2. Interactive Titration Simulation" data-zh="2. 互動滴定模擬">2. Interactive Titration Simulation</h2>
+    
+    <div class="simulation-container">
+        <!-- 左邊：儀器 -->
+        <div class="apparatus-box">
+            <p><strong class="lang" data-en="Simulate the titration: Slowly add the acid until the end point is reached." data-zh="模擬滴定：慢慢加入酸直至達到滴定終點。">Simulate the titration: Slowly add the acid until the end point is reached.</strong></p>
+            
+            <svg class="apparatus" viewBox="0 0 200 400" xmlns="http://www.w3.org/2000/svg">
+                <rect x="90" y="20" width="20" height="200" fill="none" stroke="#555" stroke-width="2"/>
+                <line x1="90" y1="40" x2="98" y2="40" stroke="#555" stroke-width="1"/>
+                <line x1="90" y1="80" x2="98" y2="80" stroke="#555" stroke-width="1"/>
+                <line x1="90" y1="120" x2="98" y2="120" stroke="#555" stroke-width="1"/>
+                <line x1="90" y1="160" x2="98" y2="160" stroke="#555" stroke-width="1"/>
+                <line x1="90" y1="200" x2="98" y2="200" stroke="#555" stroke-width="1"/>
+                
+                <rect id="burette-liquid" x="91" y="30" width="18" height="190" fill="#e0f7fa" opacity="0.7"/>
+                <rect x="85" y="220" width="30" height="8" fill="#555"/>
+                <rect x="96" y="228" width="8" height="20" fill="none" stroke="#555" stroke-width="2"/>
+
+                <polygon points="90,260 110,260 110,280 150,360 50,360 90,280" fill="none" stroke="#555" stroke-width="2"/>
+                <polygon id="flask-liquid" points="75,310 125,310 145,358 55,358" fill="#ecf0f1" opacity="0.8"/>
+                
+                <text id="svg-acid-label" x="120" y="100" font-size="12" fill="#333">Acid(aq)</text>
+                <text x="160" y="340" font-size="12" fill="#333">NaOH(aq)</text>
+                <text id="flask-label" x="160" y="355" font-size="10" fill="#555" class="lang" data-en="+ Indicator" data-zh="+ 指示劑">+ Indicator</text>
+            </svg>
+            
+            <div class="controls" id="titration-controls">
+                <label for="titrationSlider"><span class="lang" data-en="Volume of acid added:" data-zh="加入酸的體積：">Volume of acid added:</span> <span id="vol-added" style="color:#e74c3c; font-weight:bold;">0.00</span> cm³</label><br>
+                <input type="range" id="titrationSlider" min="0" max="35" step="0.05" value="0">
+                <br>
+                <div id="status-indicator" class="status-badge lang" data-en="Simulation Locked" data-zh="模擬已鎖定">Simulation Locked</div>
+            </div>
+        </div>
+
+        <!-- 右邊：動態 pH 圖表 -->
+        <div class="graph-box">
+            <strong class="lang" data-en="Titration Curve (pH vs Volume)" data-zh="滴定曲線 (pH 與 體積)">Titration Curve (pH vs Volume)</strong>
+            <svg class="graph-svg" id="ph-chart" viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+                <rect id="ind-zone" x="40" y="0" width="340" height="0" fill="#f1c40f" opacity="0" />
+                <text id="ind-zone-text" x="50" y="0" font-size="10" fill="#333" opacity="0">Indicator Zone</text>
+
+                <line x1="40" y1="260" x2="380" y2="260" class="axis-line" />
+                <line x1="40" y1="20" x2="40" y2="260" class="axis-line" />
+                
+                <text x="15" y="25" font-size="12">14</text>
+                <line x1="35" y1="20" x2="40" y2="20" class="axis-line" />
+                <line x1="40" y1="20" x2="380" y2="20" class="grid-line" />
+
+                <text x="22" y="145" font-size="12">7</text>
+                <line x1="35" y1="140" x2="40" y2="140" class="axis-line" />
+                <line x1="40" y1="140" x2="380" y2="140" class="grid-line" />
+
+                <text x="22" y="260" font-size="12">0</text>
+                <text x="10" y="15" font-size="12" font-weight="bold">pH</text>
+
+                <text x="132" y="275" font-size="12">10</text>
+                <text x="228" y="275" font-size="12">20</text>
+                <text x="325" y="275" font-size="12">30</text>
+                <text id="svg-x-label" x="150" y="295" font-size="12" font-weight="bold">Volume of Acid (cm³)</text>
+
+                <line id="eq-line" x1="277.5" y1="20" x2="277.5" y2="260" class="eq-line" />
+                <text id="eq-text" x="282" y="35" font-size="10" fill="#7f8c8d" opacity="0" style="transition: opacity 0.3s;">Eq. Point (~24.45 cm³)</text>
+
+                <path id="curve-path" class="curve-line" />
+                <path id="drawn-curve" class="drawn-curve-line" />
+                
+                <!-- 🔥 移到左下角安全區，永不阻擋曲線 -->
+                <text id="graph-ph-text" x="60" y="240" font-size="15" font-weight="bold" fill="#e74c3c" opacity="0">pH: --</text>
+                <circle id="graph-dot" class="graph-dot" cx="40" cy="260" />
+            </svg>
+        </div>
+    </div>
+
+    <h2 class="lang" data-en="3. Titration Results" data-zh="3. 滴定結果">3. Titration Results</h2>
+    <p>
+        <span class="lang" data-en="In the conical flask: 25.0 cm³ of " data-zh="錐形瓶內：25.0 cm³ 的 ">In the conical flask: 25.0 cm³ of </span>
+        <input type="text" id="molarity_naoh" value="?" readonly> 
+        <span class="lang" data-en=" M NaOH solution" data-zh=" M NaOH 溶液"> M NaOH solution</span>
+    </p>
+    
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th class="lang" data-en="Titration" data-zh="滴定次數">Titration</th>
+                    <th class="lang" data-en="1 (Trial)" data-zh="1 (試驗)">1 (Trial)</th>
+                    <th>2</th><th>3</th><th>4</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="lang" data-en="Final burette reading (cm³)" data-zh="滴定管末讀數 (cm³)">Final burette reading (cm³)</td>
+                    <td><input type="text" inputmode="decimal" id="f1"></td><td><input type="text" inputmode="decimal" id="f2"></td>
+                    <td><input type="text" inputmode="decimal" id="f3"></td><td><input type="text" inputmode="decimal" id="f4"></td>
+                </tr>
+                <tr>
+                    <td class="lang" data-en="Initial burette reading (cm³)" data-zh="滴定管初讀數 (cm³)">Initial burette reading (cm³)</td>
+                    <td><input type="text" inputmode="decimal" id="i1"></td><td><input type="text" inputmode="decimal" id="i2"></td>
+                    <td><input type="text" inputmode="decimal" id="i3"></td><td><input type="text" inputmode="decimal" id="i4"></td>
+                </tr>
+                <tr>
+                    <td id="table-acid-label" class="lang" data-en="Volume of Acid used (cm³)" data-zh="使用酸的體積 (cm³)">Volume of Acid used (cm³)</td>
+                    <td><input type="text" inputmode="decimal" id="v1"></td><td><input type="text" inputmode="decimal" id="v2"></td>
+                    <td><input type="text" inputmode="decimal" id="v3"></td><td><input type="text" inputmode="decimal" id="v4"></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="calculation-box">
+        <p><strong id="avg-acid-label" class="lang" data-en="∴ Average volume of acid used" data-zh="∴ 所用酸的平均體積">∴ Average volume of acid used</strong></p>
+        
+        <p style="font-size: 14px; color: #e67e22; margin-top: -5px; margin-bottom: 15px;">
+            <strong class="lang" data-en="💡 Hint: Exclude Trial 1 (rough data)! Use results from Titration 2, 3, and 4." data-zh="💡 提示：請排除試驗 1 的粗略數據！只使用滴定 2、3、4 的結果進行計算。">💡 Hint: Exclude Trial 1 (rough data)! Use results from Titration 2, 3, and 4.</strong>
+        </p>
+        
+        <!-- 🔥 確保數學公式同行顯示 -->
+        <p style="line-height: 2.5;">
+            <span class="nowrap-math">= ( 
+                <input type="text" inputmode="decimal" id="avg1" class="placeholder-lang" data-en="Trial 2" data-zh="試驗 2" placeholder="Trial 2"> + 
+                <input type="text" inputmode="decimal" id="avg2" class="placeholder-lang" data-en="Trial 3" data-zh="試驗 3" placeholder="Trial 3"> + 
+                <input type="text" inputmode="decimal" id="avg3" class="placeholder-lang" data-en="Trial 4" data-zh="試驗 4" placeholder="Trial 4"> 
+            ) / 3 cm³</span>
+        </p>
+        
+        <p><span class="nowrap-math">= <input type="text" inputmode="decimal" id="finalAvg"> cm³</span></p>
+        
+        <button onclick="checkAnswers()" class="lang" data-en="Check Table Answers" data-zh="檢查表格答案">Check Table Answers</button>
+        <div id="feedback" class="message" style="display:none;"></div>
+    </div>
+
+    <!-- 終極計算區域 -->
+    <h2 class="lang" data-en="4. Calculate the Molarity of the Acid" data-zh="4. 計算酸的摩爾濃度">4. Calculate the Molarity of the Acid</h2>
+    <div class="calculation-box clearfix">
+        <div class="equation-box">
+            <strong class="lang" data-en="Step 1: Calculate number of moles of NaOH in the conical flask" data-zh="步驟 1：計算錐形瓶中 NaOH 的摩爾數">Step 1: Calculate number of moles of NaOH in the conical flask</strong><br>
+            <span class="nowrap-math">
+                <span class="lang" data-en="Moles of NaOH =" data-zh="NaOH 摩爾數 =">Moles of NaOH =</span> 
+                <input type="text" inputmode="decimal" id="calc_m_naoh" placeholder="M"> x ( 25.0 / 1000 ) = <input type="text" inputmode="decimal" id="calc_moles_naoh"> mol
+            </span>
+        </div>
+
+        <div class="equation-box">
+            <strong class="lang" data-en="Step 2: Mole ratio" data-zh="步驟 2：摩爾比例">Step 2: Mole ratio</strong><br>
+            <span class="lang" data-en="From the chemical equation, mole ratio of " data-zh="根據化學方程式，摩爾比例 ">From the chemical equation, mole ratio of </span> 
+            <span class="nowrap-math">
+                <span id="calc-acid-name-1" style="font-weight:bold; color:#e74c3c;">Acid</span> : NaOH = <input type="text" inputmode="decimal" id="calc_ratio_acid"> : <input type="text" inputmode="decimal" id="calc_ratio_base">
+            </span>
+        </div>
+
+        <div class="equation-box">
+            <strong class="lang" data-en="Step 3: Calculate number of moles of Acid used" data-zh="步驟 3：計算所用酸的摩爾數">Step 3: Calculate number of moles of Acid used</strong><br>
+            <span class="nowrap-math">
+                <span class="lang" data-en="∴ Moles of " data-zh="∴ 摩爾數 (">∴ Moles of </span>
+                <span id="calc-acid-name-2" style="font-weight:bold; color:#e74c3c;">Acid</span>
+                <span class="lang" data-en=" =" data-zh=") ="> =</span>
+                <input type="text" inputmode="decimal" id="calc_moles_acid"> mol
+            </span>
+        </div>
+
+        <div class="equation-box">
+            <strong class="lang" data-en="Step 4: Calculate the Molarity of the Acid" data-zh="步驟 4：計算酸的摩爾濃度">Step 4: Calculate the Molarity of the Acid</strong><br>
+            <span class="nowrap-math">
+                <span class="lang" data-en="Molarity =" data-zh="摩爾濃度 =">Molarity =</span> 
+                <input type="text" inputmode="decimal" id="calc_moles_acid_copy" placeholder="moles"> / ( <input type="text" inputmode="decimal" id="calc_avg_vol" placeholder="Vol"> / 1000 ) M 
+            </span>
+            <br><br>
+            <span class="nowrap-math">
+                = <input type="text" inputmode="decimal" id="calc_final_molarity" placeholder="0.000"> M 
+                <span class="lang" data-en="(correct to 3 sig. fig.)" data-zh="(準確至 3 位有效數字)">(correct to 3 sig. fig.)</span>
+            </span>
+        </div>
+
+        <div class="button-group">
+            <button class="btn-calc lang" data-en="🖩 Calculator" data-zh="🖩 計算機" onclick="toggleCalc()">🖩 Calculator</button>
+            <button onclick="checkUltimateCalculations()" class="lang" data-en="Check Final Calculations" data-zh="檢查最終計算">Check Final Calculations</button>
+            <button id="btn-toggle-hints" class="btn-hint" onclick="toggleHints()">
+                <span class="lang" data-en="Show Hints 💡" data-zh="顯示提示 💡">Show Hints 💡</span>
+            </button>
+            <button class="btn-reset lang" data-en="Restart Experiment 🔄" data-zh="重新開始實驗 🔄" onclick="resetExperiment()">Restart Experiment 🔄</button>
+        </div>
+        
+        <div id="ultimate-feedback" class="message" style="display:none; margin-top:20px;"></div>
+        
+        <div id="hints-container" class="hints-box">
+            <strong class="lang" data-en="💡 Step-by-step Guide:" data-zh="💡 逐步指引：">💡 Step-by-step Guide:</strong>
+            <ul>
+                <li>
+                    <strong class="lang" data-en="Step 1:" data-zh="步驟 1：">Step 1:</strong> 
+                    <span class="lang" data-en="Formula: Moles = Molarity × Volume (in dm³). Put your chosen NaOH concentration in the first box, then multiply it by 0.025 to get the moles." data-zh="公式：摩爾數 = 濃度 × 體積 (dm³)。將你選擇的 NaOH 濃度填入第一格，然後乘以 0.025。">Formula: Moles = Molarity × Volume (in dm³). Put your chosen NaOH concentration in the first box, then multiply it by 0.025 to get the moles.</span>
+                </li>
+                <li>
+                    <strong class="lang" data-en="Step 2:" data-zh="步驟 2：">Step 2:</strong> 
+                    <span class="lang" data-en="Look at the balanced chemical equations below:" data-zh="參考以下化學方程式：">Look at the balanced chemical equations below:</span>
+                    <br>👉 HCl(aq) + NaOH(aq) → NaCl(aq) + H₂O(l)  <strong>(<span class="lang" data-en="Ratio 1:1" data-zh="比例 1:1">Ratio 1:1</span>)</strong>
+                    <br>👉 CH₃COOH(aq) + NaOH(aq) → CH₃COONa(aq) + H₂O(l)  <strong>(<span class="lang" data-en="Ratio 1:1" data-zh="比例 1:1">Ratio 1:1</span>)</strong>
+                    <br>👉 H₂SO₄(aq) + <strong>2</strong>NaOH(aq) → Na₂SO₄(aq) + 2H₂O(l)  <strong style='color:#c0392b;'>(<span class="lang" data-en="Ratio 1:2" data-zh="比例 1:2">Ratio 1:2</span>)</strong>
+                </li>
+                <li>
+                    <strong class="lang" data-en="Step 3:" data-zh="步驟 3：">Step 3:</strong> 
+                    <span class="lang" data-en="Use the ratio to find the moles of acid. If the ratio is 1:2, it means moles of acid = moles of NaOH ÷ 2." data-zh="利用比例求出酸的摩爾數。如果比例是 1:2，即 酸的摩爾數 = NaOH的摩爾數 ÷ 2。">Use the ratio to find the moles of acid. If the ratio is 1:2, it means moles of acid = moles of NaOH ÷ 2.</span>
+                </li>
+                <li>
+                    <strong class="lang" data-en="Step 4:" data-zh="步驟 4：">Step 4:</strong> 
+                    <span class="lang" data-en="Formula: Molarity = Moles ÷ Volume (in dm³). Put your acid moles in the first box, and the Average Volume (from Section 3) in the second box." data-zh="公式：濃度 = 摩爾數 ÷ 體積 (dm³)。將酸的摩爾數填入第一格，並將平均體積 (來自第 3 部分) 填入第二格。">Formula: Molarity = Moles ÷ Volume (in dm³). Put your acid moles in the first box, and the Average Volume (from Section 3) in the second box.</span><br>
+                    <span style='color:#c0392b;' class="lang" data-en="⚠️ Attention: The final answer MUST be strictly formatted to 3 significant figures (e.g., 0.100, 0.125)!" data-zh="⚠️ 注意：最終答案必須嚴格格式化為 3 位有效數字 (例如 0.100, 0.125)！">⚠️ Attention: The final answer MUST be strictly formatted to 3 significant figures (e.g., 0.100, 0.125)!</span>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- 懸浮計算機 -->
+<div id="calc-popup" class="calc-popup">
+    <div class="calc-header">
+        <span class="lang" data-en="Calculator" data-zh="科學計算機">Calculator</span>
+        <span class="calc-close" onclick="toggleCalc()">&times;</span>
+    </div>
+    <input type="text" id="calc-display" class="calc-display" readonly>
+    <div class="calc-grid">
+        <button class="calc-btn num" onclick="calcInput('7')">7</button>
+        <button class="calc-btn num" onclick="calcInput('8')">8</button>
+        <button class="calc-btn num" onclick="calcInput('9')">9</button>
+        <button class="calc-btn op" onclick="calcInput('÷')">÷</button>
+
+        <button class="calc-btn num" onclick="calcInput('4')">4</button>
+        <button class="calc-btn num" onclick="calcInput('5')">5</button>
+        <button class="calc-btn num" onclick="calcInput('6')">6</button>
+        <button class="calc-btn op" onclick="calcInput('×')">×</button>
+
+        <button class="calc-btn num" onclick="calcInput('1')">1</button>
+        <button class="calc-btn num" onclick="calcInput('2')">2</button>
+        <button class="calc-btn num" onclick="calcInput('3')">3</button>
+        <button class="calc-btn op" onclick="calcInput('-')">-</button>
+
+        <button class="calc-btn num" onclick="calcInput('0')">0</button>
+        <button class="calc-btn num" onclick="calcInput('.')">.</button>
+        <button class="calc-btn num" onclick="calcInput('(')">(</button>
+        <button class="calc-btn op" onclick="calcInput('+')">+</button>
+
+        <button class="calc-btn num" onclick="calcInput(')')">)</button>
+        <button class="calc-btn sys" onclick="calcBackspace()">⌫</button>
+        <button class="calc-btn sys" onclick="calcClear()">C</button>
+        <button class="calc-btn eval" onclick="calcEval()">=</button>
+    </div>
+</div>
+
+<script>
+    // --- 語言切換系統 (i18n) ---
+    let currentLang = 'en';
+    
+    function t(enStr, zhStr) { return currentLang === 'en' ? enStr : zhStr; }
+
+    function toggleLanguage() {
+        currentLang = currentLang === 'en' ? 'zh' : 'en';
+        document.getElementById('lang-btn').innerText = currentLang === 'en' ? '繁體中文' : 'English';
+        
+        document.querySelectorAll('.lang').forEach(el => {
+            el.innerHTML = el.getAttribute('data-' + currentLang);
+        });
+
+        document.querySelectorAll('.placeholder-lang').forEach(el => {
+            el.setAttribute('placeholder', el.getAttribute('data-' + currentLang));
+        });
+
+        let hintsBox = document.getElementById("hints-container");
+        let btnHints = document.getElementById("btn-toggle-hints");
+        if (hintsBox.style.display === "block") {
+            btnHints.innerHTML = `<span class="lang" data-en="Hide Hints 🙈" data-zh="隱藏提示 🙈">${t("Hide Hints 🙈", "隱藏提示 🙈")}</span>`;
+        } else {
+            btnHints.innerHTML = `<span class="lang" data-en="Show Hints 💡" data-zh="顯示提示 💡">${t("Show Hints 💡", "顯示提示 💡")}</span>`;
+        }
+
+        if (document.getElementById("molarity_naoh").value !== "?") {
+            updateSimulation(); 
+            let indText = document.getElementById("ind-zone-text");
+            if(currentIndicator === "mo"){
+                indText.textContent = t("Methyl Orange Zone (pH 3.1 - 4.4)", "甲基橙變色區 (pH 3.1 - 4.4)");
+            } else if (currentIndicator === "ph"){
+                indText.textContent = t("Phenolphthalein Zone (pH 8.2 - 10.0)", "酚酞變色區 (pH 8.2 - 10.0)");
+            }
+            let acidRadio = document.querySelector('input[name="acid"]:checked');
+            if(acidRadio) {
+                let acidName = acidRadio.value === "HCl" ? "HCl(aq)" : (acidRadio.value === "H2SO4" ? "H₂SO₄(aq)" : "CH₃COOH(aq)");
+                document.getElementById("svg-acid-label").textContent = acidName;
+                document.getElementById("table-acid-label").textContent = t("Volume of ", "所用 ") + acidName + t(" used (cm³)", " 的體積 (cm³)");
+                document.getElementById("avg-acid-label").textContent = t("∴ Average volume of ", "∴ 所用 ") + acidName + t(" used", " 的平均體積");
+                document.getElementById("flask-label").textContent = currentIndicator === "mo" ? t("+ Methyl Orange", "+ 甲基橙") : t("+ Phenolphthalein", "+ 酚酞");
+            }
+        }
+        
+        document.getElementById("svg-x-label").textContent = t("Volume of Acid (cm³)", "加入酸的體積 (cm³)");
+        document.getElementById("eq-text").textContent = t("Eq. Point (~24.45 cm³)", "等當點 (~24.45 cm³)");
+    }
+
+    // --- 計算機 (Calculator) 邏輯 ---
+    function toggleCalc() {
+        let calc = document.getElementById("calc-popup");
+        if (calc.style.display === "none" || calc.style.display === "") {
+            calc.style.display = "block";
+        } else {
+            calc.style.display = "none";
+        }
+    }
+
+    function calcInput(val) {
+        let display = document.getElementById("calc-display");
+        if (display.value === "Error" || display.value === "Infinity" || display.value === "NaN") {
+            display.value = "";
+        }
+        display.value += val;
+    }
+
+    function calcClear() { document.getElementById("calc-display").value = ""; }
+
+    function calcBackspace() {
+        let display = document.getElementById("calc-display");
+        if (display.value === "Error" || display.value === "Infinity" || display.value === "NaN") {
+            display.value = ""; return;
+        }
+        display.value = display.value.slice(0, -1);
+    }
+
+    function calcEval() {
+        let display = document.getElementById("calc-display");
+        let expr = display.value.replace(/×/g, '*').replace(/÷/g, '/');
+        try {
+            if (/^[0-9+\-*/(). ]+$/.test(expr)) {
+                let result = Function('"use strict";return (' + expr + ')')();
+                display.value = Math.round(result * 10000000) / 10000000;
+            } else { display.value = "Error"; }
+        } catch (e) { display.value = "Error"; }
+    }
+
+    // --- 核心變數 ---
+    let currentIndicator = ""; 
+    let currentNaOHConc = "";
+    let currentAcidType = ""; 
+
+    function mapX(v) { return 40 + (v / 35) * 340; }
+    function mapY(ph) { return 260 - (ph / 14) * 240; }
+
+    function toggleHints() {
+        let hintsBox = document.getElementById("hints-container");
+        let btn = document.getElementById("btn-toggle-hints");
+        if (hintsBox.style.display === "none" || hintsBox.style.display === "") {
+            hintsBox.style.display = "block"; 
+            btn.innerHTML = `<span class="lang" data-en="Hide Hints 🙈" data-zh="隱藏提示 🙈">${t("Hide Hints 🙈", "隱藏提示 🙈")}</span>`;
+        } else {
+            hintsBox.style.display = "none"; 
+            btn.innerHTML = `<span class="lang" data-en="Show Hints 💡" data-zh="顯示提示 💡">${t("Show Hints 💡", "顯示提示 💡")}</span>`;
+        }
+    }
+
+    function checkSetup() {
+        let concRadios = document.getElementsByName("naoh_conc");
+        let selectedConc = "";
+        for(let i=0; i<concRadios.length; i++){ if(concRadios[i].checked) selectedConc = concRadios[i].value; }
+
+        let acidRadios = document.getElementsByName("acid");
+        let selectedAcid = ""; let acidNameDisplay = ""; let isStrongAcid = false;
+
+        for(let i=0; i<acidRadios.length; i++){
+            if(acidRadios[i].checked) {
+                selectedAcid = acidRadios[i].value;
+                if(selectedAcid === "HCl") { acidNameDisplay = "HCl(aq)"; isStrongAcid = true; }
+                if(selectedAcid === "H2SO4") { acidNameDisplay = "H₂SO₄(aq)"; isStrongAcid = true; }
+                if(selectedAcid === "CH3COOH") { acidNameDisplay = "CH₃COOH(aq)"; isStrongAcid = false; }
+            }
+        }
+
+        let indRadios = document.getElementsByName("indicator");
+        let selectedInd = "";
+        for(let i=0; i<indRadios.length; i++){ if(indRadios[i].checked) selectedInd = indRadios[i].value; }
+
+        let feedback = document.getElementById("setup-feedback");
+        feedback.style.display = "block";
+
+        if (!selectedConc || !selectedAcid || !selectedInd) {
+            feedback.style.backgroundColor = "#fdf2e9"; feedback.style.color = "#e67e22";
+            feedback.innerHTML = t("⚠️ Please complete all steps (A, B, and C).", "⚠️ 請完成所有步驟 (A, B 及 C) 以進行設定。");
+            lockSimulation(); return;
+        }
+
+        currentNaOHConc = selectedConc; currentAcidType = isStrongAcid ? "strong" : "weak";
+
+        if (isStrongAcid) {
+            feedback.style.backgroundColor = "#eafaf1"; feedback.style.color = "#27ae60";
+            let indName = selectedInd === "mo" ? t("Methyl Orange", "甲基橙") : t("Phenolphthalein", "酚酞");
+            feedback.innerHTML = t(`✅ <strong>Setup Correct!</strong> <br>${acidNameDisplay} is a <strong>Strong Acid</strong> and NaOH is a <strong>Strong Alkaline</strong>.<br>Both indicators are suitable! You chose ${indName}. <em>Simulation unlocked!</em>`, `✅ <strong>設定正確！</strong> <br>${acidNameDisplay} 是<strong>強酸</strong>，而 NaOH 是<strong>強鹼</strong>。<br>兩種指示劑皆可使用！你選擇了 ${indName}。<em>模擬已解鎖！</em>`);
+            updateLabelsAndUnlock(acidNameDisplay, selectedInd, selectedConc);
+        } else {
+            if (selectedInd === "ph") {
+                feedback.style.backgroundColor = "#eafaf1"; feedback.style.color = "#27ae60";
+                feedback.innerHTML = t(`✅ <strong>Setup Correct!</strong> <br>CH₃COOH is a <strong>Weak Acid</strong> + NaOH (Strong Alkaline) ➡️ <strong>Phenolphthalein</strong> is correct! <em>Simulation unlocked!</em>`, `✅ <strong>設定正確！</strong> <br>CH₃COOH 是<strong>弱酸</strong> + NaOH (強鹼) ➡️ 使用 <strong>酚酞</strong> 是正確的！<em>模擬已解鎖！</em>`);
+                updateLabelsAndUnlock(acidNameDisplay, selectedInd, selectedConc);
+            } else {
+                feedback.style.backgroundColor = "#fdedec"; feedback.style.color = "#c0392b";
+                feedback.innerHTML = t("❌ <strong>Incorrect Indicator!</strong> <br>Weak Acid + Strong Alkaline ➡️ End point pH is ~8.8. Methyl Orange is NOT suitable! Please select Phenolphthalein.", "❌ <strong>指示劑錯誤！</strong> <br>弱酸 + 強鹼 ➡️ 滴定終點 pH 約為 8.8。甲基橙並不適用！請選擇酚酞。");
+                lockSimulation();
+            }
+        }
+    }
+
+    function drawGraphCurve() {
+        let pathStr = "";
+        for (let i = 0; i <= 350; i++) {
+            let v = i / 10;
+            let ph = currentAcidType === "strong" ? (7 - 6 * (2 / Math.PI) * Math.atan(10 * (v - 24.45))) : (8.8 - 4.5 * Math.tanh(2 * (v - 24.45)));
+            let px = mapX(v); let py = mapY(ph);
+            if (i === 0) pathStr += `M ${px},${py} `; else pathStr += `L ${px},${py} `;
+        }
+        let curve = document.getElementById("curve-path");
+        curve.setAttribute("d", pathStr); 
+        curve.style.opacity = 0.3; 
+        
+        document.getElementById("eq-line").style.opacity = 0;
+        document.getElementById("eq-text").style.opacity = 0;
+
+        let indZone = document.getElementById("ind-zone"); let indText = document.getElementById("ind-zone-text");
+        if (currentIndicator === "mo") {
+            indZone.setAttribute("y", mapY(4.4)); indZone.setAttribute("height", mapY(3.1) - mapY(4.4));
+            indZone.setAttribute("fill", "rgba(255, 152, 0, 0.2)");
+            indText.setAttribute("y", mapY(4.4) - 5); indText.textContent = t("Methyl Orange Zone (pH 3.1 - 4.4)", "甲基橙變色區 (pH 3.1 - 4.4)");
+        } else {
+            indZone.setAttribute("y", mapY(10.0)); indZone.setAttribute("height", mapY(8.2) - mapY(10.0));
+            indZone.setAttribute("fill", "rgba(244, 143, 177, 0.3)");
+            indText.setAttribute("y", mapY(10.0) - 5); indText.textContent = t("Phenolphthalein Zone (pH 8.2 - 10.0)", "酚酞變色區 (pH 8.2 - 10.0)");
+        }
+        indZone.setAttribute("opacity", "1"); indText.setAttribute("opacity", "1");
+    }
+
+    function updateLabelsAndUnlock(acidName, ind, conc) {
+        currentIndicator = ind;
+        document.getElementById("svg-acid-label").textContent = acidName;
+        document.getElementById("table-acid-label").textContent = t("Volume of ", "所用 ") + acidName + t(" used (cm³)", " 的體積 (cm³)");
+        document.getElementById("avg-acid-label").textContent = t("∴ Average volume of ", "∴ 所用 ") + acidName + t(" used", " 的平均體積");
+        document.getElementById("calc-acid-name-1").textContent = acidName;
+        document.getElementById("calc-acid-name-2").textContent = acidName;
+        document.getElementById("flask-label").textContent = ind === "mo" ? t("+ Methyl Orange", "+ 甲基橙") : t("+ Phenolphthalein", "+ 酚酞");
+        document.getElementById("molarity_naoh").value = conc;
+        
+        document.getElementById("titration-controls").style.opacity = "1";
+        document.getElementById("titration-controls").style.pointerEvents = "auto";
+        drawGraphCurve(); 
+        
+        document.getElementById("drawn-curve").style.opacity = 1;
+        document.getElementById("graph-ph-text").style.opacity = 1;
+        updateSimulation(); 
+    }
+
+    function lockSimulation() {
+        document.getElementById("titration-controls").style.opacity = "0.4";
+        document.getElementById("titration-controls").style.pointerEvents = "none";
+        document.getElementById("flask-liquid").setAttribute("fill", "#ecf0f1");
+        document.getElementById("status-indicator").innerText = t("Simulation Locked", "模擬已鎖定");
+        document.getElementById("status-indicator").style.backgroundColor = "#bdc3c7";
+        document.getElementById("molarity_naoh").value = "?";
+        
+        document.getElementById("curve-path").style.opacity = 0; 
+        document.getElementById("drawn-curve").style.opacity = 0; 
+        document.getElementById("eq-line").style.opacity = 0;
+        document.getElementById("eq-text").style.opacity = 0; 
+        document.getElementById("graph-ph-text").style.opacity = 0; 
+        document.getElementById("ind-zone").setAttribute("opacity", "0");
+        document.getElementById("ind-zone-text").setAttribute("opacity", "0");
+    }
+
+    const slider = document.getElementById("titrationSlider");
+    
+    function updateSimulation() {
+        let v = parseFloat(slider.value);
+        document.getElementById("vol-added").innerText = v.toFixed(2);
+        document.getElementById("burette-liquid").setAttribute("y", 30 + (v * 3.8));
+        document.getElementById("burette-liquid").setAttribute("height", 190 - (v * 3.8));
+
+        let ph = currentAcidType === "strong" ? (7 - 6 * (2 / Math.PI) * Math.atan(10 * (v - 24.45))) : (8.8 - 4.5 * Math.tanh(2 * (v - 24.45)));
+        
+        let drawnPathStr = "";
+        let maxI = Math.floor(v * 10); 
+        for (let i = 0; i <= maxI; i++) {
+            let curV = i / 10;
+            let curPh = currentAcidType === "strong" ? (7 - 6 * (2 / Math.PI) * Math.atan(10 * (curV - 24.45))) : (8.8 - 4.5 * Math.tanh(2 * (curV - 24.45)));
+            let px = mapX(curV); let py = mapY(curPh);
+            if (i === 0) drawnPathStr += `M ${px},${py} `; 
+            else drawnPathStr += `L ${px},${py} `;
+        }
+        if (Math.abs(v - maxI/10) > 0.001) {
+            drawnPathStr += `L ${mapX(v)},${mapY(ph)} `;
+        }
+        document.getElementById("drawn-curve").setAttribute("d", drawnPathStr);
+
+        let dot = document.getElementById("graph-dot");
+        dot.setAttribute("cx", mapX(v)); dot.setAttribute("cy", mapY(ph));
+        document.getElementById("graph-ph-text").textContent = "pH: " + ph.toFixed(2);
+
+        let eqLine = document.getElementById("eq-line");
+        let eqText = document.getElementById("eq-text");
+        if (v >= 24.35) {
+            eqLine.style.opacity = 1;
+            eqText.style.opacity = 1;
+        } else {
+            eqLine.style.opacity = 0;
+            eqText.style.opacity = 0;
+        }
+
+        let sInd = document.getElementById("status-indicator");
+        let fLiq = document.getElementById("flask-liquid");
+
+        if (currentIndicator === "mo") {
+            if (ph > 4.4) { fLiq.setAttribute("fill", "#ffd54f"); sInd.innerText = t("Yellow (Alkaline)", "黃色 (鹼性)"); sInd.style.backgroundColor = "#ffd54f"; sInd.style.color = "#333"; }
+            else if (ph >= 3.1 && ph <= 4.4) { fLiq.setAttribute("fill", "#ff9800"); sInd.innerText = t("Orange (End Point!)", "橙色 (滴定終點！)"); sInd.style.backgroundColor = "#ff9800"; sInd.style.color = "#fff"; }
+            else { fLiq.setAttribute("fill", "#e53935"); sInd.innerText = t("Red (Overshot)", "紅色 (酸性過量)"); sInd.style.backgroundColor = "#e53935"; sInd.style.color = "#fff"; }
+        } else if (currentIndicator === "ph") {
+            if (ph > 10.0) { fLiq.setAttribute("fill", "#f48fb1"); sInd.innerText = t("Pink (Alkaline)", "粉紅色 (鹼性)"); sInd.style.backgroundColor = "#f48fb1"; sInd.style.color = "#fff"; }
+            else if (ph >= 8.2 && ph <= 10.0) { fLiq.setAttribute("fill", "#fce4ec"); sInd.innerText = t("Pale Pink (End Point!)", "淺粉紅 (滴定終點！)"); sInd.style.backgroundColor = "#fce4ec"; sInd.style.color = "#333"; }
+            else { fLiq.setAttribute("fill", "#ecf0f1"); sInd.innerText = t("Colourless (Overshot)", "無色 (酸性過量)"); sInd.style.backgroundColor = "#bdc3c7"; sInd.style.color = "#333"; }
+        }
+    }
+    
+    slider.addEventListener('input', updateSimulation);
+    slider.addEventListener('change', updateSimulation);
+    slider.addEventListener('touchmove', updateSimulation);
+
+    function checkAnswers() {
+        let allCorrect = true; 
+        let tableComplete = true;
+        let feedbackMsg = "";
+        let feedbackDiv = document.getElementById("feedback"); 
+        feedbackDiv.style.display = "block";
+
+        for(let j=1; j<=4; j++) {
+            let fStr = document.getElementById('f'+j).value; 
+            let iStr = document.getElementById('i'+j).value;
+            let vStr = document.getElementById('v'+j).value; 
+            let vInput = document.getElementById('v'+j); 
+            
+            vInput.classList.remove("correct", "incorrect");
+
+            if (fStr === "" || iStr === "" || vStr === "") {
+                tableComplete = false;
+            } else {
+                let f = parseFloat(fStr); 
+                let i = parseFloat(iStr); 
+                let v = parseFloat(vStr);
+                if(v.toFixed(2) === (f - i).toFixed(2)) { 
+                    vInput.classList.add("correct"); 
+                } else { 
+                    vInput.classList.add("incorrect"); 
+                    allCorrect = false; 
+                    feedbackMsg += t(`Trial ${j} volume is incorrect.<br>`, `試驗 ${j} 體積計算錯誤。<br>`); 
+                }
+            }
+        }
+
+        let avg1Str = document.getElementById('avg1').value; 
+        let avg2Str = document.getElementById('avg2').value;
+        let avg3Str = document.getElementById('avg3').value; 
+        let finalAvgStr = document.getElementById('finalAvg').value;
+        let trial1_vol = parseFloat(document.getElementById('v1').value);
+
+        let finalAvgInput = document.getElementById('finalAvg');
+        finalAvgInput.classList.remove("correct", "incorrect");
+
+        if (avg1Str === "" || avg2Str === "" || avg3Str === "" || finalAvgStr === "") {
+            tableComplete = false;
+        } else {
+            let avg1 = parseFloat(avg1Str); 
+            let avg2 = parseFloat(avg2Str);
+            let avg3 = parseFloat(avg3Str); 
+            let finalAvg = parseFloat(finalAvgStr);
+
+            if(avg1 === trial1_vol || avg2 === trial1_vol || avg3 === trial1_vol) {
+                feedbackMsg += t("⚠️ Hint: Do not include Trial 1 in the average.<br>", "⚠️ 提示：平均值不應包含試驗 1 的粗略數據。<br>"); 
+                allCorrect = false;
+            }
+
+            let expFinal = ((avg1 + avg2 + avg3) / 3).toFixed(2);
+            if(Math.abs(finalAvg - expFinal) <= 0.01) { 
+                finalAvgInput.classList.add("correct"); 
+            } else { 
+                finalAvgInput.classList.add("incorrect"); 
+                allCorrect = false; 
+                feedbackMsg += t("Average volume is incorrect.<br>", "平均體積計算錯誤。<br>"); 
+            }
+        }
+
+        if (!tableComplete) {
+            feedbackDiv.style.backgroundColor = "#fdf2e9"; 
+            feedbackDiv.style.color = "#e67e22"; 
+            feedbackDiv.innerHTML = t("⚠️ Please fill in all empty fields in the table and average calculation first!", "⚠️ 請先填寫表格及平均體積計算中的所有空格！");
+        } else if (allCorrect && feedbackMsg === "") {
+            feedbackDiv.style.backgroundColor = "#eafaf1"; 
+            feedbackDiv.style.color = "#27ae60"; 
+            feedbackDiv.innerHTML = t("✅ Table Calculations are correct!", "✅ 表格計算完全正確！");
+        } else {
+            feedbackDiv.style.backgroundColor = "#fdedec"; 
+            feedbackDiv.style.color = "#c0392b"; 
+            feedbackDiv.innerHTML = t("❌ Errors found:<br>", "❌ 發現錯誤：<br>") + feedbackMsg;
+        }
+    }
+
+    function checkUltimateCalculations() {
+        let fb = document.getElementById("ultimate-feedback");
+        fb.style.display = "block"; fb.innerHTML = "";
+        
+        let acidRadio = document.querySelector('input[name="acid"]:checked');
+        let naohConcStr = document.getElementById("molarity_naoh").value;
+        let avgVolStr = document.getElementById("finalAvg").value;
+
+        if (!acidRadio || naohConcStr === "?" || avgVolStr === "") {
+            fb.style.backgroundColor = "#fdf2e9"; fb.style.color = "#e67e22";
+            fb.innerHTML = t("⚠️ Please complete the Experiment Setup and Average Volume calculation first!", "⚠️ 請先完成實驗設定及平均體積計算！"); return;
+        }
+
+        let acidType = acidRadio.value; let naohConc = parseFloat(naohConcStr); let avgVol = parseFloat(avgVolStr);
+        let allCorrect = true;
+
+        function validateInput(id, expectedValue, tolerance = 0.0001) {
+            let el = document.getElementById(id); let val = parseFloat(el.value); el.classList.remove("correct", "incorrect");
+            if (el.value.trim() === "") { el.classList.add("incorrect"); return false; }
+            if (!isNaN(val) && Math.abs(val - expectedValue) <= tolerance) { el.classList.add("correct"); return true; } 
+            else { el.classList.add("incorrect"); return false; }
+        }
+
+        let expectedMolesNaOH = naohConc * (25.0 / 1000);
+        let c1 = validateInput("calc_m_naoh", naohConc, 0.001); let c2 = validateInput("calc_moles_naoh", expectedMolesNaOH, 0.00001);
+        if(!c1 || !c2) { allCorrect = false; fb.innerHTML += t("Step 1 is incorrect.<br>", "步驟 1 錯誤 (請檢查 NaOH 濃度及摩爾數)。<br>"); }
+
+        let expRatioAcid = 1; let expRatioBase = (acidType === "H2SO4") ? 2 : 1;
+        let c3 = validateInput("calc_ratio_acid", expRatioAcid, 0); let c4 = validateInput("calc_ratio_base", expRatioBase, 0);
+        if(!c3 || !c4) { allCorrect = false; fb.innerHTML += t(`Step 2 is incorrect. Check equation for ${acidType}.<br>`, `步驟 2 錯誤。請檢查 ${acidType} 的化學方程式。<br>`); }
+
+        let expectedMolesAcid = expectedMolesNaOH * (expRatioAcid / expRatioBase);
+        let c5 = validateInput("calc_moles_acid", expectedMolesAcid, 0.00001);
+        if(!c5) { allCorrect = false; fb.innerHTML += t("Step 3 is incorrect.<br>", "步驟 3 錯誤。請利用摩爾比例計算酸的摩爾數。<br>"); }
+
+        let expectedMolarity = expectedMolesAcid / (avgVol / 1000);
+        let expectedMolarity3SF_Str = expectedMolarity.toPrecision(3);
+        let c6 = validateInput("calc_moles_acid_copy", expectedMolesAcid, 0.00001);
+        let c7 = validateInput("calc_avg_vol", avgVol, 0.01);
+        
+        let el8 = document.getElementById("calc_final_molarity");
+        let val8Str = el8.value.trim(); el8.classList.remove("correct", "incorrect"); let c8 = false;
+
+        if (val8Str === expectedMolarity3SF_Str) { c8 = true; el8.classList.add("correct"); } 
+        else {
+            el8.classList.add("incorrect"); let val8Num = parseFloat(val8Str); let expectedMolarityNum = parseFloat(expectedMolarity3SF_Str);
+            if (val8Str !== "" && !isNaN(val8Num) && Math.abs(val8Num - expectedMolarityNum) < 0.00001) {
+                fb.innerHTML += t("Step 4: Answer is correct but MUST strictly format to <strong>3 sig. fig.</strong>!<br>", "步驟 4：數值正確，但必須嚴格填寫為 <strong>3 位有效數字</strong>！(例如補回小數點後的0)<br>");
+            } else { fb.innerHTML += t("Step 4 is incorrect. Check Molarity formula.<br>", "步驟 4 錯誤。請檢查摩爾濃度的計算公式。<br>"); }
+            allCorrect = false;
+        }
+
+        if (allCorrect) {
+            fb.style.backgroundColor = "#eafaf1"; fb.style.color = "#27ae60";
+            fb.innerHTML = t("🎉 <strong>EXCELLENT!</strong> All calculations and significant figures are perfectly correct!", "🎉 <strong>太棒了！</strong> 所有計算及有效數字均完全正確！");
+            document.getElementById("hints-container").style.display = "none";
+            let btnHints = document.getElementById("btn-toggle-hints");
+            btnHints.innerHTML = `<span class="lang" data-en="Show Hints 💡" data-zh="顯示提示 💡">${t("Show Hints 💡", "顯示提示 💡")}</span>`;
+        } else {
+            fb.style.backgroundColor = "#fdedec"; fb.style.color = "#c0392b";
+            fb.innerHTML = t("❌ <strong>Errors found:</strong><br>", "❌ <strong>發現錯誤：</strong><br>") + fb.innerHTML;
+        }
+    }
+
+    function resetExperiment() {
+        document.querySelectorAll('input[type="radio"]').forEach(radio => radio.checked = false);
+        document.querySelectorAll('input[type="text"]').forEach(input => {
+            input.value = ''; input.classList.remove('correct', 'incorrect');
+        });
+
+        document.getElementById("molarity_naoh").value = "?";
+        document.getElementById("titrationSlider").value = 0; document.getElementById("vol-added").innerText = "0.00";
+        document.getElementById("burette-liquid").setAttribute("y", 30); document.getElementById("burette-liquid").setAttribute("height", 190);
+
+        currentIndicator = ""; currentNaOHConc = ""; currentAcidType = "";
+        lockSimulation();
+        
+        document.getElementById("calc-popup").style.display = "none";
+        document.getElementById("setup-feedback").style.display = "none";
+        document.getElementById("feedback").style.display = "none";
+        document.getElementById("ultimate-feedback").style.display = "none";
+        document.getElementById("hints-container").style.display = "none";
+        
+        let btnHints = document.getElementById("btn-toggle-hints");
+        btnHints.innerHTML = `<span class="lang" data-en="Show Hints 💡" data-zh="顯示提示 💡">${t("Show Hints 💡", "顯示提示 💡")}</span>`;
+
+        document.getElementById("svg-acid-label").textContent = "Acid(aq)";
+        document.getElementById("table-acid-label").textContent = t("Volume of Acid used (cm³)", "使用酸的體積 (cm³)");
+        document.getElementById("avg-acid-label").textContent = t("∴ Average volume of acid used", "∴ 所用酸的平均體積");
+        document.getElementById("calc-acid-name-1").textContent = "Acid";
+        document.getElementById("calc-acid-name-2").textContent = "Acid";
+        document.getElementById("flask-label").textContent = t("+ Indicator", "+ 指示劑");
+
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+</script>
+
+</body>
+</html>
