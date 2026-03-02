@@ -65,17 +65,8 @@
         th, td { border: 1px solid #bdc3c7; padding: 10px 5px; font-size: 15px; }
         th { background-color: #ecf0f1; }
         
-        /* 🔥 輸入框精簡化：固定 4 位數長度，移除預設箭嘴 */
-        input[type="text"] { 
-            width: 55px; 
-            padding: 6px 2px; 
-            text-align: center; 
-            border: 2px solid #ccc; 
-            border-radius: 4px; 
-            font-size: 15px; 
-            transition: 0.3s; 
-            box-sizing: border-box;
-        }
+        /* 輸入框樣式 */
+        input[type="text"] { width: 55px; padding: 6px 2px; text-align: center; border: 2px solid #ccc; border-radius: 4px; font-size: 15px; transition: 0.3s; box-sizing: border-box;}
         input[type="text"]:focus { border-color: #3498db; outline: none; }
         
         input.correct { border-color: #27ae60; background-color: #eafaf1; }
@@ -88,7 +79,6 @@
         .calculation-box { margin-top: 30px; padding: 20px; background-color: #f9fbfd; border-left: 4px solid #3498db; border-radius: 0 8px 8px 0; overflow-x: auto; }
         .equation-box { background-color: #fff; padding: 15px; border-radius: 5px; border: 1px solid #bdc3c7; margin: 15px 0; font-size: 16px; line-height: 2.2; overflow-x: auto; }
         
-        /* 🔥 強制同行顯示 (防止除號被折行) */
         .nowrap-math { white-space: nowrap; display: inline-block; }
 
         /* 按鈕群組 */
@@ -242,13 +232,13 @@
                 <text x="325" y="275" font-size="12">30</text>
                 <text id="svg-x-label" x="150" y="295" font-size="12" font-weight="bold">Volume of Acid (cm³)</text>
 
+                <!-- 動態等當點標記線 -->
                 <line id="eq-line" x1="277.5" y1="20" x2="277.5" y2="260" class="eq-line" />
-                <text id="eq-text" x="282" y="35" font-size="10" fill="#7f8c8d" opacity="0" style="transition: opacity 0.3s;">Eq. Point (~24.45 cm³)</text>
+                <text id="eq-text" x="282" y="35" font-size="10" fill="#7f8c8d" opacity="0" style="transition: opacity 0.3s;">Eq. Point</text>
 
                 <path id="curve-path" class="curve-line" />
                 <path id="drawn-curve" class="drawn-curve-line" />
                 
-                <!-- 🔥 移到左下角安全區，永不阻擋曲線 -->
                 <text id="graph-ph-text" x="60" y="240" font-size="15" font-weight="bold" fill="#e74c3c" opacity="0">pH: --</text>
                 <circle id="graph-dot" class="graph-dot" cx="40" cy="260" />
             </svg>
@@ -298,7 +288,6 @@
             <strong class="lang" data-en="💡 Hint: Exclude Trial 1 (rough data)! Use results from Titration 2, 3, and 4." data-zh="💡 提示：請排除試驗 1 的粗略數據！只使用滴定 2、3、4 的結果進行計算。">💡 Hint: Exclude Trial 1 (rough data)! Use results from Titration 2, 3, and 4.</strong>
         </p>
         
-        <!-- 🔥 確保數學公式同行顯示 -->
         <p style="line-height: 2.5;">
             <span class="nowrap-math">= ( 
                 <input type="text" inputmode="decimal" id="avg1" class="placeholder-lang" data-en="Trial 2" data-zh="試驗 2" placeholder="Trial 2"> + 
@@ -430,9 +419,14 @@
 </div>
 
 <script>
+    // --- 核心變數 ---
+    let currentIndicator = ""; 
+    let currentNaOHConc = "";
+    let currentAcidType = ""; 
+    let currentEndpoint = 24.45; // 預設，會立即被 randomizeEndpoint() 覆蓋
+
     // --- 語言切換系統 (i18n) ---
     let currentLang = 'en';
-    
     function t(enStr, zhStr) { return currentLang === 'en' ? enStr : zhStr; }
 
     function toggleLanguage() {
@@ -474,7 +468,7 @@
         }
         
         document.getElementById("svg-x-label").textContent = t("Volume of Acid (cm³)", "加入酸的體積 (cm³)");
-        document.getElementById("eq-text").textContent = t("Eq. Point (~24.45 cm³)", "等當點 (~24.45 cm³)");
+        document.getElementById("eq-text").textContent = t("Eq. Point (~" + currentEndpoint.toFixed(2) + " cm³)", "等當點 (~" + currentEndpoint.toFixed(2) + " cm³)");
     }
 
     // --- 計算機 (Calculator) 邏輯 ---
@@ -482,29 +476,19 @@
         let calc = document.getElementById("calc-popup");
         if (calc.style.display === "none" || calc.style.display === "") {
             calc.style.display = "block";
-        } else {
-            calc.style.display = "none";
-        }
+        } else { calc.style.display = "none"; }
     }
-
     function calcInput(val) {
         let display = document.getElementById("calc-display");
-        if (display.value === "Error" || display.value === "Infinity" || display.value === "NaN") {
-            display.value = "";
-        }
+        if (display.value === "Error" || display.value === "Infinity" || display.value === "NaN") { display.value = ""; }
         display.value += val;
     }
-
     function calcClear() { document.getElementById("calc-display").value = ""; }
-
     function calcBackspace() {
         let display = document.getElementById("calc-display");
-        if (display.value === "Error" || display.value === "Infinity" || display.value === "NaN") {
-            display.value = ""; return;
-        }
+        if (display.value === "Error" || display.value === "Infinity" || display.value === "NaN") { display.value = ""; return; }
         display.value = display.value.slice(0, -1);
     }
-
     function calcEval() {
         let display = document.getElementById("calc-display");
         let expr = display.value.replace(/×/g, '*').replace(/÷/g, '/');
@@ -516,10 +500,18 @@
         } catch (e) { display.value = "Error"; }
     }
 
-    // --- 核心變數 ---
-    let currentIndicator = ""; 
-    let currentNaOHConc = "";
-    let currentAcidType = ""; 
+    // --- 動態生成隨機終點 (20.00 to 25.00) ---
+    function randomizeEndpoint() {
+        // 生成 20.00 至 25.00，以 0.05 為間距
+        currentEndpoint = parseFloat((Math.floor(Math.random() * 101) * 0.05 + 20).toFixed(2));
+        
+        let eqText = document.getElementById("eq-text");
+        if (eqText) {
+            eqText.textContent = t("Eq. Point (~" + currentEndpoint.toFixed(2) + " cm³)", "等當點 (~" + currentEndpoint.toFixed(2) + " cm³)");
+        }
+    }
+    // 初始化呼叫
+    randomizeEndpoint();
 
     function mapX(v) { return 40 + (v / 35) * 340; }
     function mapY(ph) { return 260 - (ph / 14) * 240; }
@@ -588,15 +580,23 @@
 
     function drawGraphCurve() {
         let pathStr = "";
+        // 利用隨機終點繪製淡藍色背景線
         for (let i = 0; i <= 350; i++) {
             let v = i / 10;
-            let ph = currentAcidType === "strong" ? (7 - 6 * (2 / Math.PI) * Math.atan(10 * (v - 24.45))) : (8.8 - 4.5 * Math.tanh(2 * (v - 24.45)));
+            let ph = currentAcidType === "strong" ? (7 - 6 * (2 / Math.PI) * Math.atan(10 * (v - currentEndpoint))) : (8.8 - 4.5 * Math.tanh(2 * (v - currentEndpoint)));
             let px = mapX(v); let py = mapY(ph);
             if (i === 0) pathStr += `M ${px},${py} `; else pathStr += `L ${px},${py} `;
         }
         let curve = document.getElementById("curve-path");
         curve.setAttribute("d", pathStr); 
         curve.style.opacity = 0.3; 
+        
+        // 動態調整等當點標記線的 X 軸位置
+        let eqX = mapX(currentEndpoint);
+        document.getElementById("eq-line").setAttribute("x1", eqX);
+        document.getElementById("eq-line").setAttribute("x2", eqX);
+        document.getElementById("eq-text").setAttribute("x", eqX + 4.5);
+        document.getElementById("eq-text").textContent = t("Eq. Point (~" + currentEndpoint.toFixed(2) + " cm³)", "等當點 (~" + currentEndpoint.toFixed(2) + " cm³)");
         
         document.getElementById("eq-line").style.opacity = 0;
         document.getElementById("eq-text").style.opacity = 0;
@@ -658,13 +658,14 @@
         document.getElementById("burette-liquid").setAttribute("y", 30 + (v * 3.8));
         document.getElementById("burette-liquid").setAttribute("height", 190 - (v * 3.8));
 
-        let ph = currentAcidType === "strong" ? (7 - 6 * (2 / Math.PI) * Math.atan(10 * (v - 24.45))) : (8.8 - 4.5 * Math.tanh(2 * (v - 24.45)));
+        let ph = currentAcidType === "strong" ? (7 - 6 * (2 / Math.PI) * Math.atan(10 * (v - currentEndpoint))) : (8.8 - 4.5 * Math.tanh(2 * (v - currentEndpoint)));
         
+        // 實時繪製紅色進度線
         let drawnPathStr = "";
         let maxI = Math.floor(v * 10); 
         for (let i = 0; i <= maxI; i++) {
             let curV = i / 10;
-            let curPh = currentAcidType === "strong" ? (7 - 6 * (2 / Math.PI) * Math.atan(10 * (curV - 24.45))) : (8.8 - 4.5 * Math.tanh(2 * (curV - 24.45)));
+            let curPh = currentAcidType === "strong" ? (7 - 6 * (2 / Math.PI) * Math.atan(10 * (curV - currentEndpoint))) : (8.8 - 4.5 * Math.tanh(2 * (curV - currentEndpoint)));
             let px = mapX(curV); let py = mapY(curPh);
             if (i === 0) drawnPathStr += `M ${px},${py} `; 
             else drawnPathStr += `L ${px},${py} `;
@@ -674,13 +675,12 @@
         }
         document.getElementById("drawn-curve").setAttribute("d", drawnPathStr);
 
-        let dot = document.getElementById("graph-dot");
-        dot.setAttribute("cx", mapX(v)); dot.setAttribute("cy", mapY(ph));
         document.getElementById("graph-ph-text").textContent = "pH: " + ph.toFixed(2);
 
+        // 防劇透：過咗終點前 0.1 才顯示等當點提示
         let eqLine = document.getElementById("eq-line");
         let eqText = document.getElementById("eq-text");
-        if (v >= 24.35) {
+        if (v >= currentEndpoint - 0.1) {
             eqLine.style.opacity = 1;
             eqText.style.opacity = 1;
         } else {
@@ -761,11 +761,20 @@
 
             let expFinal = ((avg1 + avg2 + avg3) / 3).toFixed(2);
             if(Math.abs(finalAvg - expFinal) <= 0.01) { 
-                finalAvgInput.classList.add("correct"); 
+                
+                // 🔥 真實驗證機制：防作弊，要求與隨機終點相差不超過 0.3 cm³
+                if (Math.abs(finalAvg - currentEndpoint) > 0.3) {
+                    finalAvgInput.classList.add("incorrect"); 
+                    allCorrect = false; 
+                    feedbackMsg += t("Your average volume is too far from the true end point. Please observe the simulation carefully!<br>", "你的平均體積與實際滴定終點相差太遠。請重新仔細觀察模擬滴定！<br>");
+                } else {
+                    finalAvgInput.classList.add("correct"); 
+                }
+                
             } else { 
                 finalAvgInput.classList.add("incorrect"); 
                 allCorrect = false; 
-                feedbackMsg += t("Average volume is incorrect.<br>", "平均體積計算錯誤。<br>"); 
+                feedbackMsg += t("Average volume is mathematically incorrect.<br>", "平均體積算式計算錯誤。<br>"); 
             }
         }
 
@@ -855,10 +864,15 @@
         });
 
         document.getElementById("molarity_naoh").value = "?";
-        document.getElementById("titrationSlider").value = 0; document.getElementById("vol-added").innerText = "0.00";
-        document.getElementById("burette-liquid").setAttribute("y", 30); document.getElementById("burette-liquid").setAttribute("height", 190);
+        document.getElementById("titrationSlider").value = 0; 
+        document.getElementById("vol-added").innerText = "0.00";
+        document.getElementById("burette-liquid").setAttribute("y", 30); 
+        document.getElementById("burette-liquid").setAttribute("height", 190);
 
         currentIndicator = ""; currentNaOHConc = ""; currentAcidType = "";
+        
+        // 重新生成隨機滴定終點！
+        randomizeEndpoint();
         lockSimulation();
         
         document.getElementById("calc-popup").style.display = "none";
